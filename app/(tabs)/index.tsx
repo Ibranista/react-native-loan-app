@@ -1,74 +1,75 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { LoanContext } from '../../context/LoanContext';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function DashboardScreen() {
+  const { loans, repayLoan } = useContext(LoanContext);
+  const [repayInputs, setRepayInputs] = useState({});
 
-export default function HomeScreen() {
+  const handleRepayChange = (id, value) => {
+    setRepayInputs(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleRepay = (id) => {
+    if (!repayInputs[id]) return;
+    repayLoan(id, repayInputs[id]);
+    setRepayInputs(prev => ({ ...prev, [id]: '' }));
+  };
+
+  const renderLoan = ({ item }) => (
+    <View style={styles.loanItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.loanText}>Amount: {item.amount}</Text>
+        <Text style={styles.loanText}>Duration: {item.duration} months</Text>
+        <Text style={styles.loanText}>Status: {item.status}</Text>
+      </View>
+      {item.status === 'Active' && (
+        <View style={styles.repaySection}>
+          <TextInput
+            style={styles.repayInput}
+            placeholder="Repay Amount"
+            keyboardType="numeric"
+            value={repayInputs[item.id] || ''}
+            onChangeText={(text) => handleRepayChange(item.id, text)}
+          />
+          <Button title="Repay" onPress={() => handleRepay(item.id)} />
+        </View>
+      )}
+    </View>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.header}>Loan Dashboard</Text>
+      <FlatList
+        data={loans || []}
+        keyExtractor={(loan) => loan.id.toString()}
+        renderItem={renderLoan}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  loanItem: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 15,
+    marginBottom: 10,
+    flexDirection: 'row'
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  loanText: { fontSize: 16, marginBottom: 5 },
+  repaySection: { marginLeft: 10, justifyContent: 'center' },
+  repayInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 5,
+    width: 100,
+    padding: 5,
+    borderRadius: 5
   },
 });
